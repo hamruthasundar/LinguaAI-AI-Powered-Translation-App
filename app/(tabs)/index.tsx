@@ -1,6 +1,9 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
+import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
+import * as Speech from "expo-speech";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -103,6 +106,14 @@ export default function TranslateScreen() {
     [history],
   );
 
+  const handleCopy = async () => {
+    if (!translatedText.trim()) return;
+
+    await Clipboard.setStringAsync(translatedText);
+
+    Alert.alert("Copied", "Translation copied to clipboard.");
+  };
+
   const refreshHistory = useCallback(async () => {
     const items = await getHistory();
     setHistory(Array.isArray(items) ? items : []);
@@ -117,6 +128,16 @@ export default function TranslateScreen() {
     setTargetLanguage(sourceLanguage);
     setInputText(translatedText || inputText);
     setTranslatedText(inputText && translatedText ? inputText : "");
+  };
+
+  const handleSpeak = () => {
+    if (!translatedText.trim()) return;
+
+    Speech.speak(translatedText, {
+      language: targetLanguage.code,
+      pitch: 1,
+      rate: 0.9,
+    });
   };
 
   const handleTranslate = async () => {
@@ -224,13 +245,25 @@ export default function TranslateScreen() {
             <View style={styles.cardStack}>
               <View style={styles.inputCard}>
                 <View style={styles.cardHeader}>
-                  <Text style={styles.cardTitle}>Original</Text>
-                  <Pressable
-                    style={styles.tinyAction}
-                    onPress={() => setInputText("")}
-                  >
-                    <Ionicons name="close" size={18} color={theme.muted} />
-                  </Pressable>
+                  <Text style={styles.cardTitle}>Input</Text>
+
+                  <View style={{ flexDirection: "row", gap: 8 }}>
+                    <Pressable style={styles.speakGhost} onPress={handleCopy}>
+                      <Ionicons
+                        name="copy-outline"
+                        size={18}
+                        color={theme.muted}
+                      />
+                    </Pressable>
+
+                    <Pressable style={styles.speakGhost} onPress={handleSpeak}>
+                      <Ionicons
+                        name="volume-medium-outline"
+                        size={18}
+                        color={theme.muted}
+                      />
+                    </Pressable>
+                  </View>
                 </View>
 
                 <TextInput
@@ -295,23 +328,23 @@ export default function TranslateScreen() {
               <View style={styles.resultCard}>
                 <View style={styles.cardHeader}>
                   <Text style={styles.cardTitle}>Translation</Text>
-                  {translatedText ? (
-                    <View style={styles.speakGhost}>
+                  <View style={{ flexDirection: "row", gap: 8 }}>
+                    <Pressable style={styles.speakGhost} onPress={handleCopy}>
+                      <Ionicons
+                        name="copy-outline"
+                        size={18}
+                        color={theme.muted}
+                      />
+                    </Pressable>
+
+                    <Pressable style={styles.speakGhost} onPress={handleSpeak}>
                       <Ionicons
                         name="volume-medium-outline"
                         size={18}
                         color={theme.muted}
                       />
-                    </View>
-                  ) : (
-                    <View style={styles.speakGhost}>
-                      <Ionicons
-                        name="volume-medium-outline"
-                        size={18}
-                        color={theme.muted}
-                      />
-                    </View>
-                  )}
+                    </Pressable>
+                  </View>
                 </View>
 
                 {translatedText ? (
@@ -338,7 +371,9 @@ export default function TranslateScreen() {
 
             <View style={styles.historyHeader}>
               <Text style={styles.sectionTitle}>Recent translations</Text>
-              <Text style={styles.viewAll}>View all</Text>
+              <Pressable onPress={() => router.push("/history")}>
+                <Text style={styles.viewAll}>View all</Text>
+              </Pressable>
             </View>
 
             {previewHistory.length > 0 ? (

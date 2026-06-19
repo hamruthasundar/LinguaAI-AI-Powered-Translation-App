@@ -1,8 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
+import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useEffect, useState } from "react";
-import { FlatList, SafeAreaView, StyleSheet, Text, View } from "react-native";
-
+import {
+  Alert,
+  FlatList,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 // Adjust this path only if your project stores getHistory elsewhere.
 import { getHistory } from "@/lib/translation";
 
@@ -86,13 +94,20 @@ export default function HistoryScreen() {
                   <Text style={styles.languageMeta}>
                     {item.from} → {item.to}
                   </Text>
-                  <View style={styles.iconBubble}>
+                  <Pressable
+                    style={styles.iconBubble}
+                    onPress={async () => {
+                      await Clipboard.setStringAsync(item.result);
+
+                      Alert.alert("Copied", "Translation copied");
+                    }}
+                  >
                     <Ionicons
-                      name="bookmark-outline"
+                      name="copy-outline"
                       size={17}
                       color={theme.accent}
                     />
-                  </View>
+                  </Pressable>
                 </View>
                 <Text style={styles.inputText}>{item.input}</Text>
                 <Text style={styles.resultText}>{item.result}</Text>
